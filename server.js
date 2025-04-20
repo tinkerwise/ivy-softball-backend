@@ -22,14 +22,11 @@ app.get("/api/standings", async (req, res) => {
 
     $("table tbody tr").each((_, row) => {
       const columns = $(row).find("td");
-      columns.each((i, cell) => {
-        console.log(`Row ${_} Col ${i}:`, $(cell).text().trim());
-      });
+      const team = $(columns[0]).text().trim();
+      const confRecord = $(columns[2]).text().trim(); // e.g. '5-10'
+      const [wins, losses] = confRecord.split('-').map(x => parseInt(x, 10));
 
-      const team = $(columns[0]).text().trim(); // Log what column holds the team name
-      const wins = parseInt($(columns[1]).text().trim(), 10); // Might be off — this is for inspection
-      const losses = parseInt($(columns[2]).text().trim(), 10);
-      if (team) {
+      if (team && !isNaN(wins) && !isNaN(losses)) {
         standings[team] = { wins, losses };
       }
     });
