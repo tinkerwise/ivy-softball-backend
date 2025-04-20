@@ -10,8 +10,8 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+app.use(cors());
 app.use(express.static(path.join(__dirname, "public")));
-app.use(cors()); // 👈 Allow frontend to access backend from other domains
 
 app.get("/api/standings", async (req, res) => {
   try {
@@ -46,16 +46,12 @@ app.get("/api/schedule", async (req, res) => {
       const isHome = !matchText.startsWith("at ");
       const [home, away] = isHome ? [matchText, "TBD"] : ["TBD", matchText.replace("at ", "")];
       const date = new Date(dateText);
-
-      console.log({ dateText, matchText, parsedDate: date }); // DEBUG
-
       if (!isNaN(date) && date >= today) {
         series.push({ id: `${home}_vs_${away}`, home, away });
       }
     });
 
     if (series.length === 0) {
-      console.log("⚠️ No upcoming series found");
       series.push({ id: "Sample_vs_Team", home: "Sample", away: "Team" });
     }
 
@@ -65,7 +61,6 @@ app.get("/api/schedule", async (req, res) => {
     res.status(500).json({ error: "Unable to fetch schedule" });
   }
 });
-
 
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
