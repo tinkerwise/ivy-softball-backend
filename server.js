@@ -37,22 +37,33 @@ app.get("/api/schedule", async (req, res) => {
     const $ = cheerio.load(html);
     const today = new Date();
     const series = [];
+
     $(".calendar-table tbody tr").each((_, row) => {
       const dateText = $(row).find(".calendar-date").text().trim();
       const matchText = $(row).find(".calendar-opponent").text().trim();
       const isHome = !matchText.startsWith("at ");
       const [home, away] = isHome ? [matchText, "TBD"] : ["TBD", matchText.replace("at ", "")];
       const date = new Date(dateText);
+
+      console.log({ dateText, matchText, parsedDate: date }); // DEBUG
+
       if (!isNaN(date) && date >= today) {
         series.push({ id: `${home}_vs_${away}`, home, away });
       }
     });
+
+    if (series.length === 0) {
+      console.log("⚠️ No upcoming series found");
+      series.push({ id: "Sample_vs_Team", home: "Sample", away: "Team" });
+    }
+
     res.json(series);
   } catch (error) {
     console.error("Error fetching schedule:", error);
     res.status(500).json({ error: "Unable to fetch schedule" });
   }
 });
+
 
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
