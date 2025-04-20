@@ -19,12 +19,24 @@ app.get("/api/standings", async (req, res) => {
     const html = await response.text();
     const $ = cheerio.load(html);
     const standings = {};
-    $(".standings tbody tr").each((_, row) => {
-      const team = $(row).find(".team-name a").text().trim();
+
+    // Debug log to see if any table rows match
+    const rows = $("table tbody tr");
+    console.log("Rows found in standings:", rows.length);
+
+    rows.each((_, row) => {
+      const team = $(row).find("td a").first().text().trim();
       const wins = parseInt($(row).find("td").eq(1).text().trim(), 10);
       const losses = parseInt($(row).find("td").eq(2).text().trim(), 10);
-      if (team) standings[team] = { wins, losses };
+      if (team) {
+        standings[team] = { wins, losses };
+      }
     });
+
+    if (Object.keys(standings).length === 0) {
+      standings["Data Not Found"] = { wins: 0, losses: 0 };
+    }
+
     res.json(standings);
   } catch (error) {
     console.error("Error fetching standings:", error);
@@ -40,12 +52,16 @@ app.get("/api/schedule", async (req, res) => {
     const today = new Date();
     const series = [];
 
-    $(".calendar-table tbody tr").each((_, row) => {
-      const dateText = $(row).find(".calendar-date").text().trim();
-      const matchText = $(row).find(".calendar-opponent").text().trim();
+    const rows = $("table tbody tr");
+    console.log("Rows found in schedule:", rows.length);
+
+    rows.each((_, row) => {
+      const dateText = $(row).find("td").eq(0).text().trim();
+      const matchText = $(row).find("td").eq(2).text().trim();
       const isHome = !matchText.startsWith("at ");
       const [home, away] = isHome ? [matchText, "TBD"] : ["TBD", matchText.replace("at ", "")];
       const date = new Date(dateText);
+
       if (!isNaN(date) && date >= today) {
         series.push({ id: `${home}_vs_${away}`, home, away });
       }
