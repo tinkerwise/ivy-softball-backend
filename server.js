@@ -20,14 +20,15 @@ app.get("/api/standings", async (req, res) => {
     const $ = cheerio.load(html);
     const standings = {};
 
-    // Debug log to see if any table rows match
-    const rows = $("table tbody tr");
-    console.log("Rows found in standings:", rows.length);
+    $("table tbody tr").each((_, row) => {
+      const columns = $(row).find("td");
+      columns.each((i, cell) => {
+        console.log(`Row ${_} Col ${i}:`, $(cell).text().trim());
+      });
 
-    rows.each((_, row) => {
-      const team = $(row).find("td a").first().text().trim();
-      const wins = parseInt($(row).find("td").eq(1).text().trim(), 10);
-      const losses = parseInt($(row).find("td").eq(2).text().trim(), 10);
+      const team = $(columns[0]).text().trim(); // Log what column holds the team name
+      const wins = parseInt($(columns[1]).text().trim(), 10); // Might be off — this is for inspection
+      const losses = parseInt($(columns[2]).text().trim(), 10);
       if (team) {
         standings[team] = { wins, losses };
       }
@@ -41,40 +42,6 @@ app.get("/api/standings", async (req, res) => {
   } catch (error) {
     console.error("Error fetching standings:", error);
     res.status(500).json({ error: "Unable to fetch standings" });
-  }
-});
-
-app.get("/api/schedule", async (req, res) => {
-  try {
-    const response = await fetch("https://ivyleague.com/calendar.aspx?path=softball");
-    const html = await response.text();
-    const $ = cheerio.load(html);
-    const today = new Date();
-    const series = [];
-
-    const rows = $("table tbody tr");
-    console.log("Rows found in schedule:", rows.length);
-
-    rows.each((_, row) => {
-      const dateText = $(row).find("td").eq(0).text().trim();
-      const matchText = $(row).find("td").eq(2).text().trim();
-      const isHome = !matchText.startsWith("at ");
-      const [home, away] = isHome ? [matchText, "TBD"] : ["TBD", matchText.replace("at ", "")];
-      const date = new Date(dateText);
-
-      if (!isNaN(date) && date >= today) {
-        series.push({ id: `${home}_vs_${away}`, home, away });
-      }
-    });
-
-    if (series.length === 0) {
-      series.push({ id: "Sample_vs_Team", home: "Sample", away: "Team" });
-    }
-
-    res.json(series);
-  } catch (error) {
-    console.error("Error fetching schedule:", error);
-    res.status(500).json({ error: "Unable to fetch schedule" });
   }
 });
 
