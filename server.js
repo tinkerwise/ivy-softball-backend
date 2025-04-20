@@ -1,4 +1,5 @@
 import express from "express";
+import cors from "cors";
 import fetch from "node-fetch";
 import * as cheerio from "cheerio";
 import path from "path";
@@ -10,6 +11,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(express.static(path.join(__dirname, "public")));
+app.use(cors()); // 👈 Allow frontend to access backend from other domains
 
 app.get("/api/standings", async (req, res) => {
   try {
